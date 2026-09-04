@@ -1,0 +1,61 @@
+---
+name: AWS Cloudformation Stack Deployment
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+    upload-to-s3:
+        name: Upload to S3
+        runs-on: ubuntu-latest
+
+        env:
+            AWS_REGION: aws-global
+
+        # AWS Roles ARN
+        OIDC_ROLE_ARN: arn::aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_OIDC_ROLE_NAME }}
+        CICD_ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_CICD_ROLE_NAME }}
+        
+        # S3 buckets
+        CFN_BUCKET_NAME: lame-delegation-cf-templates
+        CFN_KEY: nonprod/lame-delegation-cf.yaml
+        LAMBDA_BUCKET: lame-delegation-code
+
+        steps:
+          - name: Checkout code
+            uses: actions/checkout@v5
+
+          - name: Configure AWS credentials
+            uses: aws-actions/configure-aws-credentials@v4
+            with:
+              role-to-assume: ${{ env.OIDC_ROLE_ARN }}
+              aws-region: ${{ env.CICD_ROLE_ARN }}
+
+          - name: Assume CICD Role
+            run: |
+              CREDS = $(aws sts assume-role \
+                --role-arn "$CICD_ROLE_ARN" \
+                --role-session-name lame-delegation-session)
+
+          - name: Create Lambda deployment package
+            run: |
+              mkdir -p templates/src-zip
+              zip -r templates/src-zip/src.zip src
+              ls -lh templates/src-zip
+
+          - name: Upload CloudFormation template to S3
+            run: |
+              aws s3 cp "templates/cloudformation/lame-delegation-cf.yaml" \
+                "s3://$CFN_BUCKET_NAME/$CFN_KEY" \
+
+          - name: Upload Lambda deployment package to S3
+            run: |
+              aws s3 cp "templates/src-zip/src.zip" \
+                "s3://$LAMBDA_BUCKET/src.zip"
