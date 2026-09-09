@@ -20,12 +20,12 @@ jobs:
             AWS_REGION: aws-global
             # AWS Roles ARN
             OIDC_ROLE_ARN: ${{ secrets.CICD_ROLE_ARN }}
-        # CICD_ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_CICD_ROLE_NAME }}
+            # CICD_ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_CICD_ROLE_NAME }}
         
-        # S3 buckets
-        CFN_BUCKET_NAME: lame-delegation-cf-templates
-        CFN_KEY: nonprod/lame-delegation-cf.yaml
-        LAMBDA_BUCKET: lame-delegation-code
+            # S3 buckets
+            CFN_BUCKET_NAME: lame-delegation-cf-templates
+            CFN_KEY: nonprod/lame-delegation-cf.yaml
+            LAMBDA_BUCKET: lame-delegation-code
 
         steps:
           - name: Checkout code
