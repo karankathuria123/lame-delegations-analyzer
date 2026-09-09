@@ -60,4 +60,4 @@ jobs:
               aws lambda update-function-code \
                 --function-name $LAMBDA_FUNCTION \
                 --s3-bucket $LAMBDA_BUCKET \
-                --s3-key "templates/src-zip/src.zip"
+                --s3-key "src.zip"
