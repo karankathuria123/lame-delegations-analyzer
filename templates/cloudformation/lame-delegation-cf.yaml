@@ -17,10 +17,10 @@ Parameters:
       - prod
     Description: Environment name (e.g., dev, test, prod)
 
-  ResourceSuffix:
-    Type: String
-    Default: v1
-    Description: Suffix to append to resource names for uniqueness
+  # ResourceSuffix:
+  #   Type: String
+  #   Default: v1
+  #   Description: Suffix to append to resource names for uniqueness
 
   LambdaCodeS3Bucket:
     Type: String
@@ -86,7 +86,7 @@ Resources:
   LameDelegationAnalyzerTopic:
     Type: AWS::SNS::Topic
     Properties:
-      TopicName: !Sub "lame-delegation-analyzer-${ResourceSuffix}"
+      TopicName: lame-delegation-analyzer
       DisplayName: Lame Delegation Analyzer
       Tags:
         - Key: Environment
@@ -104,7 +104,7 @@ Resources:
   LameDelegationAnalyzerLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub "/aws/lambda/lame-delegation-analyzer-${ResourceSuffix}"
+      LogGroupName: /aws/lambda/lame-delegation-analyzer
       RetentionInDays: 14
       Tags:
         - Key: Environment
@@ -116,7 +116,7 @@ Resources:
     Type: AWS::Lambda::Function
     DependsOn: LameDelegationAnalyzerLogGroup
     Properties:
-      FunctionName: !Sub "lame-delegation-analyzer-${ResourceSuffix}"
+      FunctionName: lame-delegation-analyzer
       Handler: src.index.lambda_handler
       Runtime: python3.12
       Architectures: 
@@ -127,8 +127,9 @@ Resources:
       MemorySize: 512
       # Role: !Ref LambdaExecutionRoleArn
       Code:
-        S3Bucket: !Ref LambdaCodeS3Bucket
-        S3Key: !Ref LambdaCodeS3Key
+        ZipFile: |
+          def lambda_function(event, context):
+            return {"statusCode": 200, "body": "Placeholder code initialized"}
       # VpcConfig:
         # SubnetIds: !Ref VpcSubnetIds
         # SecurityGroupIds: !Ref VpcSecurityGroupIds
@@ -147,7 +148,7 @@ Resources:
   LameDelegationAnalyzerErrorAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub "lame-delegation-analyzer-error-alarm-${ResourceSuffix}"
+      AlarmName: lame-delegation-analyzer-error-alarm
       AlarmDescription: Alarm for Lame Delegation Analyzer Lambda function errors
       Namespace: AWS/Lambda
       MetricName: Errors
@@ -167,7 +168,7 @@ Resources:
     Type: AWS::Events::Rule
     Condition: IsWeeklyScheduleEnabled
     Properties:
-      Name: !Sub "lame-delegation-analyzer-schedule-${ResourceSuffix}"
+      Name: lame-delegation-analyzer-schedule
       Description: Weekly schedule for Lame Delegation Analyzer Lambda function
       ScheduleExpression: !Ref ScheduleExpression
       State: ENABLED
