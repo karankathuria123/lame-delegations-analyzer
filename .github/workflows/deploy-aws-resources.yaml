@@ -31,8 +31,16 @@ jobs:
           - name: Checkout code
             uses: actions/checkout@v5
 
+          - name: Debug OIDC Token Claims
+            run: |
+              # Requesting a temporary token from GitHub runtime to inspect the formatting
+              JWT_TOKEN=$(curl -s "$ACTIONS_ID_TOKEN_REQUEST_URL" -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN")
+              echo "Copy the payload string below and decode it on jwt.io to see your exact sub structure:"
+              echo "$JWT_TOKEN" | cut -d'.' -f2 | base64 --decode
+
+
           - name: Configure AWS credentials
-            uses: aws-actions/configure-aws-credentials@v4
+            uses: aws-actions/configure-aws-credentials@v6.2.4
             with:
               role-to-assume: ${{ env.OIDC_ROLE_ARN }}
               aws-region: ${{ env.AWS_REGION }}
