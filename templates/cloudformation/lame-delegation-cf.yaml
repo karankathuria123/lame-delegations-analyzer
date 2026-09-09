@@ -122,15 +122,15 @@ Resources:
       ReservedConcurrentExecutions: 1
       Timeout: 300
       MemorySize: 512
-      Role: !Ref LambdaExecutionRoleArn
+      # Role: !Ref LambdaExecutionRoleArn
       Code:
         S3Bucket: !Ref LambdaCodeS3Bucket
         S3Key: !Ref LambdaCodeS3Key
       VpcConfig:
-        SubnetIds: !Ref VpcSubnetIds
-        SecurityGroupIds: !Ref VpcSecurityGroupIds
-      Layers:
-        - !Ref RequestsLayerArn
+        # SubnetIds: !Ref VpcSubnetIds
+        # SecurityGroupIds: !Ref VpcSecurityGroupIds
+      # Layers:
+      #   - !Ref RequestsLayerArn
       Environment:
         Variables:
           SNS_TOPIC_ARN: !Ref LameDelegationAnalyzerTopic
