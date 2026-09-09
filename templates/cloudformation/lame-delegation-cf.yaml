@@ -118,7 +118,8 @@ Resources:
       FunctionName: !Sub "lame-delegation-analyzer-${ResourceSuffix}"
       Handler: src.index.lambda_handler
       Runtime: python3.12
-      Architectures: arm64
+      Architectures: 
+        - arm64
       ReservedConcurrentExecutions: 1
       Timeout: 300
       MemorySize: 512
