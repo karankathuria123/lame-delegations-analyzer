@@ -121,7 +121,7 @@ Resources:
       Runtime: python3.12
       Architectures: 
         - arm64
-      ReservedConcurrentExecutions: 1
+      # ReservedConcurrentExecutions: 1
       Role: !Ref LambdaExecutionRoleArn
       Timeout: 300
       MemorySize: 512
