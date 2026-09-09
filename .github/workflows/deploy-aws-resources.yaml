@@ -43,13 +43,7 @@ jobs:
             uses: aws-actions/configure-aws-credentials@v6.2.4
             with:
               role-to-assume: ${{ env.OIDC_ROLE_ARN }}
-              aws-region: ${{ env.AWS_REGION }}
-
-          - name: Assume CICD Role
-            run: |
-              CREDS = $(aws sts assume-role \
-                --role-arn "$CICD_ROLE_ARN" \
-                --role-session-name lame-delegation-session)
+              aws-region: us-east-1
 
           - name: Create Lambda deployment package
             run: |
