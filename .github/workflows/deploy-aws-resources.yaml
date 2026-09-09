@@ -53,7 +53,7 @@ jobs:
           - name: Upload Lambda Deployment Package to S3
             run: |
               aws s3 cp "templates/src-zip/src.zip" \
-                "s3://$LAMBDA_BUCKET/src.zip"
+                "s3://$LAMBDA_BUCKET"
 
           - name: Deploy Live Lambda Code Update
             run: |
