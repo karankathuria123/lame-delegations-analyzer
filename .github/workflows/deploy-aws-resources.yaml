@@ -18,10 +18,9 @@ jobs:
 
         env:
             AWS_REGION: aws-global
-
-        # AWS Roles ARN
-        OIDC_ROLE_ARN: arn::aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_OIDC_ROLE_NAME }}
-        CICD_ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_CICD_ROLE_NAME }}
+            # AWS Roles ARN
+            OIDC_ROLE_ARN: ${{ secrets.CICD_ROLE_ARN }}
+        # CICD_ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_CICD_ROLE_NAME }}
         
         # S3 buckets
         CFN_BUCKET_NAME: lame-delegation-cf-templates
@@ -36,7 +35,7 @@ jobs:
             uses: aws-actions/configure-aws-credentials@v4
             with:
               role-to-assume: ${{ env.OIDC_ROLE_ARN }}
-              aws-region: ${{ env.CICD_ROLE_ARN }}
+              aws-region: ${{ env.AWS_REGION }}
 
           - name: Assume CICD Role
             run: |
