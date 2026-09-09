@@ -32,9 +32,10 @@ Parameters:
     Default: src.zip
     Description: S3 key for the Lambda deployment package
 
-  # LambdaExecutionRoleArn:
-  #   Type: String
-  #   Description: ARN of the IAM role that the Lambda function will assume
+  LambdaExecutionRoleArn:
+    Type: String
+    Default: arn:aws:iam::103021623663:role/github-actions-cicd-role
+    Description: ARN of the IAM role that the Lambda function will assume
 
   # VpcSubnetIds:
   #   Type: List<AWS::EC2::Subnet::Id>
@@ -121,6 +122,7 @@ Resources:
       Architectures: 
         - arm64
       ReservedConcurrentExecutions: 1
+      Role: !Ref LambdaExecutionRoleArn
       Timeout: 300
       MemorySize: 512
       # Role: !Ref LambdaExecutionRoleArn
