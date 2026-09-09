@@ -68,7 +68,7 @@ Conditions:
 Resources:
   LameDelegationCodeS3:
     Type: AWS::S3::Bucket
-    DeletionPolicy: Retain # Prevents CloudFormation from deleting the bucket if the stack is deleted
+    DeletionPolicy: Delete # Delete the bucket while deleting CloudFormation Stack
     Properties:
       BucketName: !Ref LambdaCodeS3Bucket
       VersioningConfiguration:
