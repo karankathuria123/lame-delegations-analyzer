@@ -65,5 +65,5 @@ jobs:
             uses: aws-actions/aws-cloudformation-github-deploy@v2
             with:
               name: LameDelegationStack
-              template: templates/cloudformation/lame-delegation-cf.yaml
+              template: ${{ github.workspace }}/templates/cloudformation/lame-delegation-cf.yaml
               fail-on-empty-changeset: false
