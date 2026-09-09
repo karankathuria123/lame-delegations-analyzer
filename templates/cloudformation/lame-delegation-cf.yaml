@@ -183,9 +183,9 @@ Resources:
       SourceArn: !GetAtt LameDelegationEventRule.Arn
 
   Outputs:
-    LambdaFunctionArn:
-      Description: ARN of the Lame Delegation Analyzer Lambda function
-      Value: !GetAtt LameDelegationAnalyzerFunction.Arn
+    # LambdaFunctionArn:
+    #   Description: ARN of the Lame Delegation Analyzer Lambda function
+    #   Value: !GetAtt LameDelegationAnalyzerFunction.Arn
 
     SNSTopicArn:
       Description: ARN of the SNS topic for notifications
