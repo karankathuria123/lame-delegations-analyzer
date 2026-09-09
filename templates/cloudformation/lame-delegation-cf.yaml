@@ -182,16 +182,16 @@ Resources:
       Principal: events.amazonaws.com
       SourceArn: !GetAtt LameDelegationEventRule.Arn
 
-  Outputs:
-    # LambdaFunctionArn:
-    #   Description: ARN of the Lame Delegation Analyzer Lambda function
-    #   Value: !GetAtt LameDelegationAnalyzerFunction.Arn
+  # Outputs:
+  #   LambdaFunctionArn:
+  #     Description: ARN of the Lame Delegation Analyzer Lambda function
+  #     Value: !GetAtt LameDelegationAnalyzerFunction.Arn
 
-    SNSTopicArn:
-      Description: ARN of the SNS topic for notifications
-      Value: !Ref LameDelegationAnalyzerTopic
+  #   SNSTopicArn:
+  #     Description: ARN of the SNS topic for notifications
+  #     Value: !Ref LameDelegationAnalyzerTopic
 
-    EventBridgeRuleArn:
-      Condition: IsWeeklyScheduleEnabled
-      Description: ARN of the EventBridge rule for scheduling
-      Value: !GetAtt LameDelegationEventRule.Arn
+  #   EventBridgeRuleArn:
+  #     Condition: IsWeeklyScheduleEnabled
+  #     Description: ARN of the EventBridge rule for scheduling
+  #     Value: !GetAtt LameDelegationEventRule.Arn
