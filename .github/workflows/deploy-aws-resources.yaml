@@ -51,12 +51,19 @@ jobs:
               zip -r templates/src-zip/src.zip src
               ls -lh templates/src-zip
 
-          - name: Upload CloudFormation template to S3
-            run: |
-              aws s3 cp "templates/cloudformation/lame-delegation-cf.yaml" \
-                "s3://$CFN_BUCKET_NAME/$CFN_KEY" \
+          # - name: Upload CloudFormation template to S3
+          #   run: |
+          #     aws s3 cp "templates/cloudformation/lame-delegation-cf.yaml" \
+          #       "s3://$CFN_BUCKET_NAME/$CFN_KEY" \
 
-          - name: Upload Lambda deployment package to S3
-            run: |
-              aws s3 cp "templates/src-zip/src.zip" \
-                "s3://$LAMBDA_BUCKET/src.zip"
+          # - name: Upload Lambda deployment package to S3
+          #   run: |
+          #     aws s3 cp "templates/src-zip/src.zip" \
+          #       "s3://$LAMBDA_BUCKET/src.zip"
+
+          - name: Deploy CloudFormation Stack
+            uses: aws-actions/aws-cloudformation-github-deploy@v2
+            with:
+              name: LameDelegationStack
+              template: templates/cloudformation/lame-delegation-cf.yaml
+              no-fail-on-empty-changeset: "1"
