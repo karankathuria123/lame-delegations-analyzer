@@ -32,21 +32,21 @@ Parameters:
     Default: src.zip
     Description: S3 key for the Lambda deployment package
 
-  LambdaExecutionRoleArn:
-    Type: String
-    Description: ARN of the IAM role that the Lambda function will assume
+  # LambdaExecutionRoleArn:
+  #   Type: String
+  #   Description: ARN of the IAM role that the Lambda function will assume
 
-  VpcSubnetIds:
-    Type: List<AWS::EC2::Subnet::Id>
-    Description: Subnet for Lambda VPC configuration
+  # VpcSubnetIds:
+  #   Type: List<AWS::EC2::Subnet::Id>
+  #   Description: Subnet for Lambda VPC configuration
 
-  VpcSecurityGroupIds:
-    Type: List<AWS::EC2::SecurityGroup::Id>
-    Description: Security group for Lambda VPC configuration
+  # VpcSecurityGroupIds:
+  #   Type: List<AWS::EC2::SecurityGroup::Id>
+  #   Description: Security group for Lambda VPC configuration
 
-  RequestsLayerArn:
-    Type: String
-    Description: ARN of requests layer
+  # RequestsLayerArn:
+  #   Type: String
+  #   Description: ARN of requests layer
 
   EnableWeeklySchedule:
     Type: String
