@@ -61,120 +61,137 @@ Parameters:
     Default: "cron(0 10 ? * FRI *)"
     Description: Cron expression for the weekly schedule (default is every Monday at 12 PM UTC)
 
-  Conditions:
-    IsWeeklyScheduleEnabled: !Equals [!Ref EnableWeeklySchedule, "true"]
+Conditions:
+  IsWeeklyScheduleEnabled: !Equals [!Ref EnableWeeklySchedule, "true"]
+
+Resources:
+  LameDelegationCodeS3:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain # Prevents CloudFormation from deleting the bucket if the stack is deleted
+    Properties:
+      BucketName: !Ref LambdaCodeS3Bucket
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  LameDelegationAnalyzerTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "lame-delegation-analyzer-${ResourceSuffix}"
+      DisplayName: Lame Delegation Analyzer
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Application
+          Value: Lame Delegation Analyzer
+
+  EmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref LameDelegationAnalyzerTopic
+      Protocol: email
+      Endpoint: !Ref NotificationEmail
+
+  LameDelegationAnalyzerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/lame-delegation-analyzer-${ResourceSuffix}"
+      RetentionInDays: 14
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Application
+          Value: Lame Delegation Analyzer
   
-  Resources:
-    LameDelegationAnalyzerTopic:
-      Type: AWS::SNS::Topic
-      Properties:
-        TopicName: !Sub "lame-delegation-analyzer-${ResourceSuffix}"
-        DisplayName: Lame Delegation Analyzer
-        Tags:
-          - Key: Environment
-            Value: !Ref EnvironmentName
-          - Key: Application
-            Value: Lame Delegation Analyzer
+  LameDelegationAnalyzerFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: LameDelegationAnalyzerLogGroup
+    Properties:
+      FunctionName: !Sub "lame-delegation-analyzer-${ResourceSuffix}"
+      Handler: src.index.lambda_handler
+      Runtime: python3.12
+      Architecture: arm64
+      ReservedConcurrentExecutions: 1
+      Timeout: 300
+      MemorySize: 512
+      Role: !Ref LambdaExecutionRoleArn
+      Code:
+        S3Bucket: !Ref LambdaCodeS3Bucket
+        S3Key: !Ref LambdaCodeS3Key
+      VpcConfig:
+        SubnetIds: !Ref VpcSubnetIds
+        SecurityGroupIds: !Ref VpcSecurityGroupIds
+      Layers:
+        - !Ref RequestsLayerArn
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref LameDelegationAnalyzerTopic
+          ENVIRONMENT_NAME: !Ref EnvironmentName
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Application
+          Value: Lame Delegation Analyzer
 
-    EmailSubscription:
-      Type: AWS::SNS::Subscription
-      Properties:
-        TopicArn: !Ref LameDelegationAnalyzerTopic
-        Protocol: email
-        Endpoint: !Ref NotificationEmail
+  LameDelegationAnalyzerErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "lame-delegation-analyzer-error-alarm-${ResourceSuffix}"
+      AlarmDescription: Alarm for Lame Delegation Analyzer Lambda function errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref LameDelegationAnalyzerFunction
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref LameDelegationAnalyzerTopic
 
-    LameDelegationAnalyzerLogGroup:
-      Type: AWS::Logs::LogGroup
-      Properties:
-        LogGroupName: !Sub "/aws/lambda/lame-delegation-analyzer-${ResourceSuffix}"
-        RetentionInDays: 14
-        Tags:
-          - Key: Environment
-            Value: !Ref EnvironmentName
-          - Key: Application
-            Value: Lame Delegation Analyzer
-    
-    LameDelegationAnalyzerFunction:
-      Type: AWS::Lambda::Function
-      DependsOn: LameDelegationAnalyzerLogGroup
-      Properties:
-        FunctionName: !Sub "lame-delegation-analyzer-${ResourceSuffix}"
-        Handler: src.index.lambda_handler
-        Runtime: python3.12
-        Architecture: arm64
-        ReservedConcurrentExecutions: 1
-        Timeout: 300
-        MemorySize: 512
-        Role: !Ref LambdaExecutionRoleArn
-        Code:
-          S3Bucket: !Ref LambdaCodeS3Bucket
-          S3Key: !Ref LambdaCodeS3Key
-        VpcConfig:
-          SubnetIds: !Ref VpcSubnetIds
-          SecurityGroupIds: !Ref VpcSecurityGroupIds
-        Layers:
-          - !Ref RequestsLayerArn
-        Environment:
-          Variables:
-            SNS_TOPIC_ARN: !Ref LameDelegationAnalyzerTopic
-            ENVIRONMENT_NAME: !Ref EnvironmentName
-        Tags:
-          - Key: Environment
-            Value: !Ref EnvironmentName
-          - Key: Application
-            Value: Lame Delegation Analyzer
+  LameDelegationEventRule:
+    Type: AWS::Events::Rule
+    Condition: IsWeeklyScheduleEnabled
+    Properties:
+      Name: !Sub "lame-delegation-analyzer-schedule-${ResourceSuffix}"
+      Description: Weekly schedule for Lame Delegation Analyzer Lambda function
+      ScheduleExpression: !Ref ScheduleExpression
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt LameDelegationAnalyzerFunction.Arn
+          Id: LameDelegationAnalyzerFunctionTarget
+          Input: !Sub '{"source": "eventbridge-rule","environment": "${EnvironmentName}"}'
+        
+  EventRulePermission:
+    Type: AWS::Lambda::Permission
+    Condition: IsWeeklyScheduleEnabled
+    Properties:
+      FunctionName: !Ref LameDelegationAnalyzerFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt LameDelegationEventRule.Arn
 
-    LameDelegationAnalyzerErrorAlarm:
-      Type: AWS::CloudWatch::Alarm
-      Properties:
-        AlarmName: !Sub "lame-delegation-analyzer-error-alarm-${ResourceSuffix}"
-        AlarmDescription: Alarm for Lame Delegation Analyzer Lambda function errors
-        Namespace: AWS/Lambda
-        MetricName: Errors
-        Dimensions:
-          - Name: FunctionName
-            Value: !Ref LameDelegationAnalyzerFunction
-        Statistic: Sum
-        Period: 300
-        EvaluationPeriods: 1
-        Threshold: 1
-        ComparisonOperator: GreaterThanOrEqualToThreshold
-        TreatMissingData: notBreaching
-        AlarmActions:
-          - !Ref LameDelegationAnalyzerTopic
+  Outputs:
+    LambdaFunctionArn:
+      Description: ARN of the Lame Delegation Analyzer Lambda function
+      Value: !GetAtt LameDelegationAnalyzerFunction.Arn
 
-    LameDelegationEventRule:
-      Type: AWS::Events::Rule
+    SNSTopicArn:
+      Description: ARN of the SNS topic for notifications
+      Value: !Ref LameDelegationAnalyzerTopic
+
+    EventBridgeRuleArn:
       Condition: IsWeeklyScheduleEnabled
-      Properties:
-        Name: !Sub "lame-delegation-analyzer-schedule-${ResourceSuffix}"
-        Description: Weekly schedule for Lame Delegation Analyzer Lambda function
-        ScheduleExpression: !Ref ScheduleExpression
-        State: ENABLED
-        Targets:
-          - Arn: !GetAtt LameDelegationAnalyzerFunction.Arn
-            Id: LameDelegationAnalyzerFunctionTarget
-            Input: !Sub '{"source": "eventbridge-rule","environment": "${EnvironmentName}"}'
-          
-    EventRulePermission:
-      Type: AWS::Lambda::Permission
-      Condition: IsWeeklyScheduleEnabled
-      Properties:
-        FunctionName: !Ref LameDelegationAnalyzerFunction
-        Action: lambda:InvokeFunction
-        Principal: events.amazonaws.com
-        SourceArn: !GetAtt LameDelegationEventRule.Arn
-
-    Outputs:
-      LambdaFunctionArn:
-        Description: ARN of the Lame Delegation Analyzer Lambda function
-        Value: !GetAtt LameDelegationAnalyzerFunction.Arn
-
-      SNSTopicArn:
-        Description: ARN of the SNS topic for notifications
-        Value: !Ref LameDelegationAnalyzerTopic
-
-      EventBridgeRuleArn:
-        Condition: IsWeeklyScheduleEnabled
-        Description: ARN of the EventBridge rule for scheduling
-        Value: !GetAtt LameDelegationEventRule.Arn
+      Description: ARN of the EventBridge rule for scheduling
+      Value: !GetAtt LameDelegationEventRule.Arn
