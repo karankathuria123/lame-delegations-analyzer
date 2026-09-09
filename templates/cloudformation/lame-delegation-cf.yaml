@@ -126,7 +126,7 @@ Resources:
       Code:
         S3Bucket: !Ref LambdaCodeS3Bucket
         S3Key: !Ref LambdaCodeS3Key
-      VpcConfig:
+      # VpcConfig:
         # SubnetIds: !Ref VpcSubnetIds
         # SecurityGroupIds: !Ref VpcSecurityGroupIds
       # Layers:
